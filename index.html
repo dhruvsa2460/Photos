@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b7a75">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Drive Photos</title>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<style>
+:root{--bg:#f6f7f8;--panel:#fff;--fg:#1d2227;--mut:#66707a;--line:#dde1e5;--ac:#0b7a75;--ph:#e3e6e9}
+@media(prefers-color-scheme:dark){:root{--bg:#101315;--panel:#171b1e;--fg:#e7eaed;--mut:#8b96a0;--line:#2a3035;--ac:#4fd1c5;--ph:#22282c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+[hidden]{display:none!important}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:8px 14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+h1{font-size:17px;margin:0 8px 0 0;font-weight:650}
+.sp{flex:1}
+nav{display:flex;gap:2px;background:var(--bg);border-radius:9px;padding:2px}
+nav button{border:0;background:transparent;border-radius:7px;padding:6px 12px;font-weight:600;color:var(--mut)}
+nav button.on{background:var(--panel);color:var(--fg);box-shadow:0 0 0 1px var(--line)}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:600;display:inline-block}
+@media(prefers-color-scheme:dark){.btn{color:#06201d}}
+.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 11px}
+#status{color:var(--mut);font-size:13px;margin-top:4px;min-height:18px}
+#reauth{background:var(--ac);color:#fff;border-radius:8px;padding:6px 10px;margin-top:6px}
+#years{display:flex;gap:6px;overflow-x:auto;margin-top:6px}
+#years:empty{display:none}
+#years button{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px 12px;font-size:13px;white-space:nowrap}
+section{max-width:1500px;margin:0 auto;padding:0 14px 48px}
+#setup{padding-top:14px;display:grid;gap:10px;max-width:640px}
+#setup label,.opts label{display:grid;gap:3px;font-size:13px;color:var(--mut)}
+input[type=text],select{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;color:var(--fg)}
+.note{color:var(--mut);font-size:13px}
+.empty{margin:56px auto;max-width:460px;color:var(--mut);text-align:center}
+.month{position:sticky;top:var(--hh,90px);z-index:2;background:var(--bg);margin:0;padding:16px 0 6px;font-size:19px;font-weight:650}
+.month small{font-weight:400;color:var(--mut);font-size:13px;margin-left:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:3px;content-visibility:auto;contain-intrinsic-size:auto 500px}
+.t{position:relative;aspect-ratio:1;background:var(--ph);border:0;padding:0;overflow:hidden;border-radius:3px}
+.t img{width:100%;height:100%;object-fit:cover;display:block}
+.t .nm{position:absolute;inset:0;display:grid;place-items:center;padding:6px;font-size:11px;color:var(--mut);word-break:break-all}
+.t .v{position:absolute;right:5px;bottom:5px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;border-radius:4px;padding:1px 6px}
+.albums{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding-top:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;text-align:left;padding:0}
+.card .cv{aspect-ratio:4/3;background:var(--ph)}
+.card img{width:100%;height:100%;object-fit:cover;display:block}
+.card div.m{padding:8px 10px}.card b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card span{color:var(--mut);font-size:13px}
+.opts{display:grid;gap:12px;max-width:520px;margin:14px 0}
+.opts .ck{display:flex;gap:8px;align-items:flex-start;color:var(--fg)}
+.opts .ck input{margin-top:4px}
+.q{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.q b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.q i{color:var(--mut);font-style:normal}
+.q u{grid-column:1/3;height:3px;background:var(--ph);border-radius:2px;overflow:hidden;text-decoration:none}
+.q u s{display:block;height:100%;width:0;background:var(--ac);text-decoration:none}
+#lb{position:fixed;inset:0;background:rgba(6,8,9,.97);z-index:20;display:none;color:#e7eaed;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#lb.on{display:flex;flex-direction:column}
+#lb .bar{display:flex;gap:8px;align-items:center;padding:10px 14px;font-size:13px}
+#lb .bar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#lb .bar button,#lb .bar a{background:#242b30;border:0;border-radius:8px;padding:7px 12px;color:#e7eaed;text-decoration:none;font-size:13px}
+#lb .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+#lb img,#lb video{max-width:100%;max-height:100%;object-fit:contain}
+#lb .msg{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:13px;color:#aab3ba}
+#lb .nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(36,43,48,.8);border:0;color:#fff;width:42px;height:60px;border-radius:8px;font-size:22px}
+#lb .prev{left:8px}#lb .next{right:8px}
+@media(max-width:520px){.grid{grid-template-columns:repeat(3,1fr);gap:2px}#lb .nav{display:none}}
+</style>
+</head>
+<body>
+<header id="hd">
+  <div class="row">
+    <h1>Drive Photos</h1>
+    <nav id="tabs"><button data-v="Photos" class="on">Photos</button><button data-v="Albums">Albums</button><button data-v="Backup">Backup</button></nav>
+    <span class="sp"></span>
+    <button class="ghost" id="rf">Refresh</button><button class="ghost" id="stb">Setup</button>
+  </div>
+  <div id="status"></div>
+  <div id="reauth" hidden>Your session ended. <button class="ghost" id="rb">Reconnect</button></div>
+  <div id="years"></div>
+</header>
+
+<section id="setup">
+  <label>OAuth client ID<input type="text" id="cid" placeholder="123456-abc.apps.googleusercontent.com" autocomplete="off"></label>
+  <label>ALL_PHOTOS folder (link or ID — leave empty to find it by name)<input type="text" id="rp" placeholder="https://drive.google.com/drive/folders/..." autocomplete="off"></label>
+  <label>ALLBUM folder (link or ID — leave empty to find it by name)<input type="text" id="ra" placeholder="https://drive.google.com/drive/folders/..." autocomplete="off"></label>
+  <div><button class="btn" id="go">Sign in and load</button></div>
+  <p class="note">This app talks only to Google. Your photos are never sent anywhere else.</p>
+</section>
+
+<section id="vPhotos"><div class="empty">Open Setup, add your client ID and sign in.</div></section>
+<section id="vAlbums" hidden></section>
+<section id="vBackup" hidden>
+  <div class="opts">
+    <p class="note" id="bnote">Load your library first, then choose photos and videos from this device. Each file goes to ALL_PHOTOS / year / month, and missing folders are created.</p>
+    <label>New month folder name<select id="mf"><option value="MM">02</option><option value="NAME">February</option><option value="BOTH">02 - February</option></select></label>
+    <label class="ck"><input type="checkbox" id="unk"><span>Put files with no date in the name or metadata into date-unknown</span></label>
+    <div><label class="btn">Choose photos and videos<input type="file" id="files" multiple accept="image/*,video/*" hidden></label> <button class="ghost" id="cx">Stop</button></div>
+  </div>
+  <div id="sum" class="note"></div><div id="queue"></div>
+</section>
+
+<div id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <div class="bar"><span id="cap"></span><a id="od" target="_blank" rel="noopener">Open in Drive</a><button id="dl">Download</button><button id="x">Close</button></div>
+  <div class="stage"><button class="nav prev" id="pv" aria-label="Previous">&#8249;</button><img id="big" alt=""><video id="vid" controls playsinline hidden></video><button class="nav next" id="nx" aria-label="Next">&#8250;</button><div class="msg" id="msg"></div></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id), sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const FOLDER='application/vnd.google-apps.folder', API='https://www.googleapis.com/drive/v3/files';
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const status=t=>$('status').textContent=t, pad=n=>String(n).padStart(2,'0');
+let token='',exp=0,tc=null,rp=null,rres=null,tree=null,photos=[],albums=new Map(),known=new Set(),openAlbum=null,LB=[],cur=-1,seq=0,cancel=false;
+let done=new Set(); try{done=new Set(JSON.parse(store.get('done')||'[]'))}catch(e){}
+['cid','rp','ra'].forEach(k=>$(k).value=store.get(k));
+new ResizeObserver(()=>document.documentElement.style.setProperty('--hh',$('hd').offsetHeight+'px')).observe($('hd'));
+
+/* ---------- sign-in ---------- */
+$('go').onclick=()=>{
+  const cid=$('cid').value.trim(); if(!cid) return status('Enter your OAuth client ID.');
+  if(!window.google) return status('Google sign-in did not load. Check your connection and reload.');
+  ['cid','rp','ra'].forEach(k=>store.set(k,$(k).value.trim()));
+  tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive',callback:onTok,error_callback:e=>status('Sign-in problem: '+(e.type||'cancelled'))});
+  tc.requestAccessToken();
+};
+function onTok(r){
+  if(!r.access_token) return status('Sign-in failed: '+(r.error||'unknown'));
+  token=r.access_token; exp=Date.now()+(r.expires_in-90)*1000; $('reauth').hidden=true;
+  if(rres){rres();rres=null;rp=null;} else boot();
+}
+function reauth(){ $('reauth').hidden=false; return rp||(rp=new Promise(r=>rres=r)); }
+$('rb').onclick=()=>tc.requestAccessToken({prompt:''});
+async function fresh(){ if(Date.now()>exp) await reauth(); }
+async function af(url,opt={}){
+  for(let i=0;i<6;i++){
+    await fresh();
+    try{
+      const r=await fetch(url,{...opt,headers:{...(opt.headers||{}),Authorization:'Bearer '+token}});
+      if(r.status===401){exp=0;continue;}
+      if((r.status===403||r.status===429||r.status>=500)&&i<3){await sleep(1000*2**i);continue;}
+      return r;
+    }catch(e){await sleep(1000*2**i);}
+  }
+  throw new Error('Network problem. Try again.');
+}
+async function api(p){
+  const r=await af(API+'?'+new URLSearchParams(p));
+  if(!r.ok) throw new Error(r.status===404?'Folder not found. Check the link.':'Drive error '+r.status);
+  return r.json();
+}
+async function listAll(id){
+  const out=[]; let pt;
+  do{
+    const p={q:`'${id}' in parents and trashed=false and (mimeType='${FOLDER}' or mimeType contains 'image/' or mimeType contains 'video/')`,
+      fields:'nextPageToken,files(id,name,mimeType,size,thumbnailLink,webViewLink,modifiedTime,imageMediaMetadata/time)',pageSize:1000};
+    if(pt) p.pageToken=pt;
+    const r=await api(p); out.push(...r.files); pt=r.nextPageToken;
+  }while(pt);
+  return out;
+}
+
+/* ---------- library scan ---------- */
+const fid=s=>(s.match(/folders\/([\w-]+)/)||s.match(/[?&]id=([\w-]+)/)||[null,s.trim()])[1];
+async function resolve(v,name){
+  if(v.trim()) return fid(v);
+  const r=await api({q:`name='${name}' and mimeType='${FOLDER}' and trashed=false`,fields:'files(id)',pageSize:5});
+  return r.files[0]?r.files[0].id:null;
+}
+function monthOf(n){
+  const m=n.match(/^(\d{1,2})(?!\d)/); if(m&&+m[1]>=1&&+m[1]<=12) return +m[1];
+  const i=MONTHS.findIndex(x=>n.toLowerCase().startsWith(x.slice(0,3).toLowerCase())); return i+1;
+}
+function nameDate(n){
+  const m=n.match(/((?:19|20)\d\d)[-_.]?(0[1-9]|1[0-2])[-_.]?(0[1-9]|[12]\d|3[01])/);
+  return m&&+m[1]<=new Date().getFullYear()?new Date(+m[1],m[2]-1,+m[3]):null;
+}
+function dateOf(i){
+  const t=i.imageMediaMetadata&&i.imageMediaMetadata.time, m=t&&t.match(/(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/);
+  if(m&&+m[1]>1970) return new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6]);
+  return nameDate(i.name)||new Date(i.modifiedTime);
+}
+function childCtx(kind,e,i){
+  if(kind==='a') return e.d===0?{album:i.name}:e.c;
+  if(e.d===0){
+    if(/^(19|20)\d\d$/.test(i.name)){const y=+i.name; if(!tree.years[y]) tree.years[y]={id:i.id,months:{}}; return {y};}
+    if(/date.?unknown/i.test(i.name)){tree.unknown=i.id; return {u:1};}
+    return {};
+  }
+  if(e.d===1&&e.c.y){
+    const m=monthOf(i.name), ym=tree.years[e.c.y].months;
+    if(m&&!ym[m]){ym[m]=i.id; tree.sample=tree.sample||i.name;}
+    return {y:e.c.y,m};
+  }
+  return e.c;
+}
+async function scan(rootId,kind,out){
+  const q=[{id:rootId,d:0,c:kind==='a'?{album:'Loose files'}:{}}]; let active=0,n=0;
+  await new Promise((res,rej)=>{
+    const pump=()=>{
+      while(active<6&&q.length){
+        const e=q.pop(); active++;
+        listAll(e.id).then(items=>{
+          for(const i of items){
+            if(i.mimeType===FOLDER) q.push({id:i.id,d:e.d+1,c:childCtx(kind,e,i)});
+            else out.push({id:i.id,name:i.name,size:+i.size||0,video:i.mimeType.startsWith('video/'),thumb:i.thumbnailLink,link:i.webViewLink,date:dateOf(i),ctx:e.c});
+          }
+          active--; n++; status(`Scanning ${kind==='a'?'albums':'photos'}… ${n} folders, ${out.length.toLocaleString()} items`); pump();
+        }).catch(rej);
+      }
+      if(!active&&!q.length) res();
+    };
+    pump();
+  });
+}
+async function boot(){
+  try{
+    status('Finding your folders…');
+    const main=await resolve($('rp').value,'ALL_PHOTOS');
+    if(!main) throw new Error('ALL_PHOTOS not found. Paste its link in Setup.');
+    const alb=await resolve($('ra').value,'ALLBUM');
+    tree={root:main,years:{},unknown:null,sample:''}; photos=[]; albums=new Map(); known=new Set(); openAlbum=null;
+    await scan(main,'m',photos);
+    const ap=[]; if(alb) await scan(alb,'a',ap);
+    photos.forEach(p=>known.add(p.name+'|'+p.size));
+    for(const p of ap){const k=p.ctx.album; if(!albums.has(k)) albums.set(k,[]); albums.get(k).push(p);}
+    if(tree.sample) $('mf').value=/^\d+\s*[-_ ]\s*[A-Za-z]/.test(tree.sample)?'BOTH':/^\d+$/.test(tree.sample)?'MM':'NAME';
+    $('setup').hidden=true; $('bnote').textContent=`Library loaded: ${photos.length.toLocaleString()} items in ALL_PHOTOS. Choose photos and videos from this device. Each goes to ALL_PHOTOS / year / month, and missing folders are created.`;
+    renderPhotos(); renderAlbums(); tab(curTab);
+    status(`${photos.length.toLocaleString()} photos and videos · ${albums.size} albums${alb?'':' (ALLBUM not found)'}`);
+  }catch(e){status(e.message); $('setup').hidden=false;}
+}
+$('rf').onclick=()=>token?boot():status('Sign in first (Setup).');
+$('stb').onclick=()=>$('setup').hidden=!$('setup').hidden;
+
+/* ---------- views ---------- */
+let curTab='Photos';
+function tab(v){
+  curTab=v;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  ['Photos','Albums','Backup'].forEach(x=>$('v'+x).hidden=x!==v);
+  $('years').style.display=v==='Photos'?'':'none';
+}
+$('tabs').onclick=e=>{if(e.target.dataset.v) tab(e.target.dataset.v);};
+const sz=(u,n)=>u?u.replace(/=s\d+$/,'=s'+n):'';
+function tile(p,list,i){
+  const b=document.createElement('button'); b.className='t'; b.title=p.name; b.onclick=()=>openLB(list,i);
+  const fb=()=>{const s=document.createElement('span');s.className='nm';s.textContent=p.name;b.prepend(s);};
+  if(p.thumb){const im=document.createElement('img');im.loading='lazy';im.referrerPolicy='no-referrer';im.alt=p.name;im.src=sz(p.thumb,400);im.onerror=()=>{im.remove();fb();};b.appendChild(im);} else fb();
+  if(p.video){const v=document.createElement('span');v.className='v';v.textContent='Video';b.appendChild(v);}
+  return b;
+}
+function renderPhotos(){
+  const el=$('vPhotos'), ys=$('years'); ys.innerHTML='';
+  if(!photos.length){el.innerHTML='<div class="empty">No photos or videos found in ALL_PHOTOS.</div>';return;}
+  const G=new Map();
+  for(const p of photos){
+    const c=p.ctx, k=c.u?-1:(c.y&&c.m?c.y*100+c.m:p.date.getFullYear()*100+p.date.getMonth()+1);
+    if(!G.has(k)) G.set(k,[]); G.get(k).push(p);
+  }
+  const keys=[...G.keys()].sort((a,b)=>b-a); LB=[]; el.innerHTML=''; const seen=new Set(), frag=document.createDocumentFragment();
+  const all=[]; for(const k of keys){const l=G.get(k).sort((a,b)=>b.date-a.date); all.push(...l);}
+  let idx=0;
+  for(const k of keys){
+    const l=G.get(k), h=document.createElement('h2'); h.className='month';
+    h.textContent=k<0?'Date unknown':new Date(Math.floor(k/100),k%100-1,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+    const s=document.createElement('small'); s.textContent=l.length.toLocaleString(); h.appendChild(s);
+    const g=document.createElement('div'); g.className='grid';
+    for(const p of l) g.appendChild(tile(p,all,idx++));
+    frag.append(h,g);
+    const y=Math.floor(k/100); if(k>0&&!seen.has(y)){seen.add(y);const b=document.createElement('button');b.textContent=y;b.onclick=()=>h.scrollIntoView({behavior:'smooth'});ys.appendChild(b);}
+  }
+  el.appendChild(frag);
+}
+function renderAlbums(){
+  const el=$('vAlbums'); el.innerHTML='';
+  if(openAlbum){
+    const l=albums.get(openAlbum).slice().sort((a,b)=>b.date-a.date);
+    const top=document.createElement('div'); top.className='row'; top.style.padding='12px 0';
+    top.innerHTML='<button class="ghost">Back to albums</button><b></b>'; top.lastChild.textContent=openAlbum+' ('+l.length+')';
+    top.firstChild.onclick=()=>{openAlbum=null;renderAlbums();};
+    const g=document.createElement('div'); g.className='grid'; l.forEach((p,i)=>g.appendChild(tile(p,l,i)));
+    el.append(top,g); return;
+  }
+  if(!albums.size){el.innerHTML='<div class="empty">No albums yet. Create subfolders inside ALLBUM in Drive and add photos to them.</div>';return;}
+  const w=document.createElement('div'); w.className='albums';
+  for(const name of [...albums.keys()].sort((a,b)=>a.localeCompare(b))){
+    const l=albums.get(name), c=document.createElement('button'); c.className='card';
+    const cv=document.createElement('div'); cv.className='cv'; const t=l.find(p=>p.thumb);
+    if(t){const im=document.createElement('img');im.loading='lazy';im.referrerPolicy='no-referrer';im.alt='';im.src=sz(t.thumb,400);cv.appendChild(im);}
+    const m=document.createElement('div'); m.className='m'; m.innerHTML='<b></b><span></span>'; m.firstChild.textContent=name; m.lastChild.textContent=l.length.toLocaleString()+' items';
+    c.append(cv,m); c.onclick=()=>{openAlbum=name;renderAlbums();window.scrollTo(0,0);}; w.appendChild(c);
+  }
+  el.appendChild(w);
+}
+
+/* ---------- viewer ---------- */
+function openLB(list,i){LB=list;showLB(i);}
+async function showLB(i){
+  if(i<0||i>=LB.length) return; cur=i; const p=LB[i], my=++seq;
+  $('lb').classList.add('on'); const big=$('big'), vid=$('vid'); vid.pause(); vid.hidden=true; vid.removeAttribute('src'); big.hidden=false; $('msg').textContent='';
+  big.src=sz(p.thumb,2000); big.alt=p.name; $('cap').textContent=p.name+' · '+p.date.toLocaleDateString(); $('od').href=p.link; $('x').focus();
+  if(p.video){
+    if(p.size>150*1048576){$('msg').textContent='Large video. Use Open in Drive to play it.';return;}
+    $('msg').textContent='Loading video…';
+    try{
+      const r=await af(`${API}/${p.id}?alt=media`); if(!r.ok) throw 0;
+      const u=URL.createObjectURL(await r.blob()); if(my!==seq) return;
+      vid.src=u; vid.hidden=false; big.hidden=true; $('msg').textContent='';
+    }catch(e){ if(my===seq) $('msg').textContent='Could not load video. Use Open in Drive.'; }
+  }
+}
+const closeLB=()=>{$('lb').classList.remove('on');$('big').src='';$('vid').pause();$('vid').removeAttribute('src');cur=-1;seq++;};
+$('x').onclick=closeLB; $('pv').onclick=()=>showLB(cur-1); $('nx').onclick=()=>showLB(cur+1);
+$('lb').onclick=e=>{if(e.target.classList.contains('stage')) closeLB();};
+document.addEventListener('keydown',e=>{if(cur<0)return; if(e.key==='Escape')closeLB(); else if(e.key==='ArrowLeft')showLB(cur-1); else if(e.key==='ArrowRight')showLB(cur+1);});
+let sx=0; $('lb').addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
+$('lb').addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-sx; if(Math.abs(d)>70&&cur>=0) showLB(cur+(d<0?1:-1));});
+$('dl').onclick=async()=>{
+  const p=LB[cur]; if(!p) return; $('msg').textContent='Downloading…';
+  try{const r=await af(`${API}/${p.id}?alt=media`); if(!r.ok) throw 0; const a=document.createElement('a'); a.href=URL.createObjectURL(await r.blob()); a.download=p.name; a.click(); $('msg').textContent='';}
+  catch(e){$('msg').textContent='Download failed.';}
+};
+
+/* ---------- backup ---------- */
+const MIME={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',heic:'image/heic',heif:'image/heif',mp4:'video/mp4',mov:'video/quicktime',m4v:'video/x-m4v',avi:'video/x-msvideo',mkv:'video/x-matroska','3gp':'video/3gpp'};
+const mimeOf=f=>f.type||MIME[(f.name.split('.').pop()||'').toLowerCase()]||'application/octet-stream';
+async function exifDate(f){
+  if(!/\.jpe?g$/i.test(f.name)) return null;
+  try{
+    const b=new DataView(await f.slice(0,262144).arrayBuffer()); if(b.getUint16(0)!==0xFFD8) return null;
+    for(let o=2;o<b.byteLength-4;){
+      const mk=b.getUint16(o), len=b.getUint16(o+2);
+      if(mk===0xFFE1&&b.getUint32(o+4)===0x45786966){
+        const t=o+10, le=b.getUint16(t)===0x4949, g16=x=>b.getUint16(t+x,le), g32=x=>b.getUint32(t+x,le);
+        const rd=off=>{const n=g16(off),r={};for(let i=0;i<n;i++){const e=off+2+i*12;r[g16(e)]=g32(e+8);}return r;};
+        const i0=rd(g32(4)), sub=i0[0x8769]?rd(i0[0x8769]):{}, off=sub[0x9003]||i0[0x0132]; if(!off) return null;
+        let s=''; for(let i=0;i<19;i++) s+=String.fromCharCode(b.getUint8(t+off+i));
+        const m=s.match(/(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/); return m&&+m[1]>1970?new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6]):null;
+      }
+      if((mk&0xFF00)!==0xFF00) break; o+=2+len;
+    }
+  }catch(e){}
+  return null;
+}
+async function dateFor(f){
+  const n=nameDate(f.name); if(n) return {d:n,src:'name'};
+  const x=await exifDate(f); if(x) return {d:x,src:'exif'};
+  return {d:new Date(f.lastModified),src:'file'};
+}
+const fp={}, memo=(k,fn)=>fp[k]||(fp[k]=fn());
+async function mkFolder(name,parent){
+  const r=await af(API+'?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,mimeType:FOLDER,parents:[parent]})});
+  if(!r.ok) throw new Error('Could not create folder '+name); return (await r.json()).id;
+}
+const monthName=m=>{const v=$('mf').value; return v==='MM'?pad(m):v==='NAME'?MONTHS[m-1]:pad(m)+' - '+MONTHS[m-1];};
+async function folderFor(d,src){
+  if(src==='file'&&$('unk').checked) return memo('u',async()=>tree.unknown||(tree.unknown=await mkFolder('date-unknown',tree.root)));
+  const y=d.getFullYear(), m=d.getMonth()+1;
+  return memo(y+'-'+m,async()=>{
+    const yid=await memo('y'+y,async()=>{if(tree.years[y]) return tree.years[y].id; const id=await mkFolder(String(y),tree.root); tree.years[y]={id,months:{}}; return id;});
+    if(tree.years[y].months[m]) return tree.years[y].months[m];
+    const id=await mkFolder(monthName(m),yid); tree.years[y].months[m]=id; return id;
+  });
+}
+function put(loc,f,mime,onp){
+  return new Promise((res,rej)=>{
+    const x=new XMLHttpRequest(); x.open('PUT',loc); x.setRequestHeader('Authorization','Bearer '+token); x.setRequestHeader('Content-Type',mime);
+    x.upload.onprogress=e=>e.lengthComputable&&onp(e.loaded/e.total);
+    x.onload=()=>{if(x.status<300) res(); else{if(x.status===401) exp=0; rej(new Error('HTTP '+x.status));}};
+    x.onerror=()=>rej(new Error('Network error')); x.send(f);
+  });
+}
+async function upload(f,parent,onp){
+  const mime=mimeOf(f); let err;
+  for(let a=0;a<3;a++){
+    try{
+      const init=await af('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id',{method:'POST',
+        headers:{'Content-Type':'application/json; charset=UTF-8','X-Upload-Content-Type':mime,'X-Upload-Content-Length':String(f.size)},
+        body:JSON.stringify({name:f.name,parents:[parent],modifiedTime:new Date(f.lastModified).toISOString()})});
+      if(!init.ok) throw new Error('Could not start upload ('+init.status+')');
+      const loc=init.headers.get('Location'); if(!loc) throw new Error('No upload address returned');
+      await fresh(); await put(loc,f,mime,onp); return;
+    }catch(e){err=e; await sleep(1500*(a+1));}
+  }
+  throw err;
+}
+$('files').onchange=e=>{const l=[...e.target.files]; e.target.value=''; if(l.length) backup(l);};
+$('cx').onclick=()=>{cancel=true;};
+async function backup(list){
+  if(!tree||!token){status('Sign in and load your library first.');return;}
+  cancel=false; $('queue').innerHTML='';
+  const rows=list.map(f=>{const d=document.createElement('div');d.className='q';d.innerHTML='<b></b><i>Waiting</i><u><s></s></u>';d.firstChild.textContent=f.name;$('queue').appendChild(d);return d;});
+  const c={up:0,skip:0,fail:0}; let next=0;
+  const sum=()=>$('sum').textContent=`Uploaded ${c.up} · Already in Drive ${c.skip} · Failed ${c.fail} · ${list.length} selected`;
+  sum();
+  const worker=async()=>{
+    while(next<list.length&&!cancel){
+      const i=next++, f=list[i], r=rows[i], set=t=>r.children[1].textContent=t, bar=r.querySelector('s');
+      try{
+        const k=f.name+'|'+f.size, k2=k+'|'+f.lastModified;
+        if(known.has(k)||done.has(k2)){set('Already in Drive'); c.skip++; continue;}
+        set('Reading date…'); const {d,src}=await dateFor(f);
+        const parent=await folderFor(d,src);
+        set('Uploading…'); await upload(f,parent,p=>{bar.style.width=Math.round(p*100)+'%';});
+        bar.style.width='100%'; set('Done'); done.add(k2); known.add(k); c.up++;
+      }catch(e){c.fail++; set('Failed: '+e.message);}
+      finally{sum();}
+    }
+  };
+  await Promise.all([worker(),worker()]);
+  store.set('done',JSON.stringify([...done].slice(-20000)));
+  $('sum').textContent+=cancel?' · Stopped':' · Finished. Tap Refresh to see new photos.';
+}
+</script>
+</body>
+</html>
